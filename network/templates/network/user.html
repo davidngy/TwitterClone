@@ -1,0 +1,75 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+{% load static %}
+<h1>{{ username }}</h1>
+
+<div>
+    <h1>Follwers: {{ followers.count }}</h1>
+    <h1>Following: {{ following.count }}</h1>
+    {% if user.is_authenticated %}
+        {% if user != currentUser %}
+            {% if ifFollowed %}
+                <form action="{% url 'unfollow' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="userFollow" value="{{ currentUser }}">
+                    <input type="submit" value="Unfollow">
+                </form>
+            {% else %}
+            <form action="{% url 'follow' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="userFollow" value="{{ currentUser }}">
+                <input type="submit" value="Follow">
+            </form>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+</div>
+{% csrf_token %}
+{% for post in rightPage  %}
+<div class="card" style="width: 40rem;">
+    <div class="card-body">
+        <h5 class="card-title"><a href="{% url 'get_user' userID=post.creator.id %}"><strong>{{ post.creator }}</strong></a></h5> 
+        <div class="card">
+            <p id="post-content-{{ post.id }}" class="card-text">{{ post.post_content }}</p>
+            <div id="edit-container-{{ post.id }}" style="display: none;">
+                <textarea name="post_content" id="edit-textarea-{{ post.id }}" class="form-control"></textarea>
+                <button id="saveChangesButton-{{ post.id }}" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+        <p>{{ post.date }}, {{ post.time }}</p>
+        <button class="like" data-post-id="{{ post.id }}" data-liked="{{ post.liked }}">
+          {% if user.is_authenticated %}
+              {% if post.liked %}
+                  Unlike
+              {% else %}
+                  Like
+              {% endif %}
+          {% else %}
+              Likes
+          {% endif %}
+        </button>
+        <p id="like-count-{{ post.id }}">{{ post.likes_count }}</p>
+        {% if request.user == post.creator %}
+        <button class="btn btn-primary edit" style="color: white;" data-post-id="{{ post.id }}">Edit</button>
+
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+<nav aria-label="Page navigation example">
+    <ul class="pagination">
+        {% if rightPage.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ rightPage.previous_page_number }}">Previous</a></li>
+        {% endif %}
+        {% if rightPage.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ rightPage.next_page_number }}">Next</a></li>
+        {% endif %}
+    </ul>
+  </nav>
+
+
+<script src="{% static 'network/main.js' %}"></script>
+<script>const csrfToken = "{{ csrf_token }}";</script>
+{% endblock %}
